@@ -61,6 +61,19 @@
       <div class="spinner"></div>
       <p>AI 모델을 로딩 중입니다...</p>
     </div>
+
+    <!-- 게임 오버 오버레이 -->
+    <div id="game-over" class="overlay">
+      <div class="game-over-content">
+        <h2>☠️ GAME OVER ☠️</h2>
+        <p class="final-score-label">최종 점수</p>
+        <p id="final-score" class="final-score">0</p>
+        <div class="button-group">
+          <button id="restart-btn" class="btn primary">다시 하기</button>
+          <button id="menu-btn" class="btn secondary">메뉴로 가기</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
