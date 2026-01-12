@@ -116,6 +116,14 @@ class GameEngine {
     // 2. 바구니 이동
     this.updateBasketPosition();
 
+    // 2-1. Fever Timer (Update logic)
+    if (this.isFeverMode) {
+      this.feverTimer -= deltaTime;
+      if (this.feverTimer <= 0) {
+        this.isFeverMode = false;
+      }
+    }
+
     // 3. 아이템 이동 및 충돌
     for (let i = this.items.length - 1; i >= 0; i--) {
       const item = this.items[i];
@@ -164,26 +172,38 @@ class GameEngine {
     // 아이템 타입 확률 조정
     const rand = Math.random();
     let type = "apple";
+    let speedMult = 1;
 
-    // 폭탄 비율 증가 (30%)
-    // 선물상자: 매우 희귀 (1%)
-    // 쉴드: 희귀 (2%)
-    if (rand < 0.01) {
-      type = "gift";
-    } else if (rand < 0.03) {
-      type = "shield";
-    } else if (rand < 0.33) {
-      type = "bomb";
-    } else if (rand < 0.6) {
-      type = "grape";
-    } else if (rand < 0.8) {
-      type = "orange";
+    // FEVER MODE: 무조건 과일, 속도 빠름, 많이 나옴
+    if (this.isFeverMode) {
+      // Fever일 때는 좋은 과일 확률 UP
+      const fRand = Math.random();
+      if (fRand < 0.4) type = "orange"; // 40%
+      else if (fRand < 0.7) type = "grape"; // 30%
+      else type = "apple";
+
+      speedMult = 1.3; // 속도 1.3배
     } else {
-      type = "apple";
+      // Normal Mode
+      if (rand < 0.01) {
+        type = "gift";
+      } else if (rand < 0.03) {
+        type = "shield";
+      } else if (rand < 0.04) {
+        type = "heart"; // Heart Item (Very Rare)
+      } else if (rand < 0.35) {
+        type = "bomb";
+      } else if (rand < 0.6) {
+        type = "grape";
+      } else if (rand < 0.8) {
+        type = "orange";
+      } else {
+        type = "apple";
+      }
     }
 
     // 레벨에 따른 속도 증가
-    const speed = this.baseSpeed * (1 + (this.level * 0.1));
+    const speed = this.baseSpeed * (1 + (this.level * 0.1)) * speedMult;
 
     this.items.push({
       x: x,
@@ -205,7 +225,16 @@ class GameEngine {
       case "apple": scoreDelta = 100; break;
       case "orange": scoreDelta = 200; break;
       case "grape": scoreDelta = 300; break;
-      case "gift": scoreDelta = 1000; break; // 대박 점수
+
+      case "gift":
+        scoreDelta = 500;
+        this.activateFever();
+        break; // Fever Mode Trigger
+
+      case "heart":
+        this.lives = Math.min(3, this.lives + 1); // Max 3
+        if (this.onLivesChange) this.onLivesChange(this.lives, this.hasShield);
+        break;
 
       case "shield":
         this.hasShield = true;
@@ -223,7 +252,6 @@ class GameEngine {
           }
         }
         if (this.onLivesChange) this.onLivesChange(this.lives, this.hasShield);
-        // 폭탄은 점수 변동 없음 (생존이 목적)
         break;
     }
 
@@ -233,12 +261,20 @@ class GameEngine {
     // 레벨업 (1000점 마다)
     if (this.score >= this.level * 1000) {
       this.level++;
-      this.spawnInterval = Math.max(300, 1000 - (this.level * 50));
+      if (!this.isFeverMode) {
+        this.spawnInterval = Math.max(300, 1000 - (this.level * 50));
+      }
     }
 
     if (this.onScoreChange) {
       this.onScoreChange(this.score, this.level);
     }
+  }
+
+  activateFever() {
+    this.isFeverMode = true;
+    this.feverTimer = 5.0; // 5 seconds
+    this.spawnInterval = 200; // Very fast spawn
   }
 
   render() {
@@ -285,6 +321,7 @@ class GameEngine {
       if (item.type === "bomb") icon = "💣";
       if (item.type === "gift") icon = "🎁";
       if (item.type === "shield") icon = "🛡️";
+      if (item.type === "heart") icon = "❤️";
 
       ctx.font = "50px sans-serif";
       ctx.fillText(icon, item.x, item.y);

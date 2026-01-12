@@ -37,14 +37,28 @@ const dom = {
     Left: document.querySelector('.tag.left'),
     Center: document.querySelector('.tag.center'),
     Right: document.querySelector('.tag.right')
-  }
+  },
+
+  // Toggles
+  toggles: document.querySelectorAll('.toggle-btn')
 };
+
+let controlMode = 'camera'; // 'camera' or 'keyboard'
 
 /**
  * App Initialization
  */
 async function init() {
   try {
+    // 0. Toggle Setup
+    dom.toggles.forEach(btn => {
+      btn.addEventListener('click', () => {
+        dom.toggles.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        controlMode = btn.dataset.mode;
+      });
+    });
+
     // 1. Setup Engines
     gameEngine = new GameEngine();
     gameEngine.init(dom.gameCanvas);
@@ -78,6 +92,7 @@ async function init() {
 
     poseEngine.setPredictionCallback((prediction) => {
       if (!isInitialized) return;
+      if (controlMode !== 'camera') return; // Ignore camera if in keyboard mode
 
       // Find Max Prob
       let maxClass = "";
@@ -184,8 +199,23 @@ function updateZone() {
 // 1. Menu -> Game Start
 dom.mainStartBtn.addEventListener('click', () => {
   showScreen('game');
+
+  // Hide/Show Webcam based on mode
+  if (controlMode === 'keyboard') {
+    dom.webcamContainer.style.opacity = '0.1'; // Dim it
+    // if we want to completely pause pose engine?
+    // maybe just keep it running for simplicity, but ignore its output?
+  } else {
+    dom.webcamContainer.style.opacity = '1';
+  }
+
   gameEngine.start();
 });
+
+// Update Pose Callback to respect Control Mode
+// (Already inside init, but let's verify logic)
+// We need to modify the poseEngine callback in init() to check controlMode
+
 
 // 2. Game View -> Back to Menu
 dom.backToMenuBtn.addEventListener('click', () => {
