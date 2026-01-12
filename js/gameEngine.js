@@ -1,58 +1,52 @@
 /**
  * gameEngine.js
- * Fruit Catcher 게임 로직 구현
+ * Fruit Catcher: Survival Mode
+ * - 무제한 시간
+ * - 생명 3개 (폭탄 피격 시 감소)
+ * - 쉴드 아이템 (폭탄 1회 방어)
+ * - 선물상자 (희귀, 고득점)
  */
 
 class GameEngine {
   constructor() {
     this.score = 0;
     this.level = 1;
-    this.timeLimit = 60;
-    this.currentPose = "Center"; // 현재 플레이어 포즈 (Left, Center, Right)
+    this.currentPose = "Center";
     this.isGameActive = false;
     this.gameLoopId = null;
     this.lastTime = 0;
 
-    // 게임 오브젝트 설정
-    this.items = []; // 낙하물 배열
+    // Survival Mode 상태 변수
+    this.lives = 3;
+    this.hasShield = false;
+
+    // 게임 오브젝트
+    this.items = [];
     this.itemSpawnTimer = 0;
-    this.spawnInterval = 2500; // 2.5초마다 생성 (초기값 증가)
-    this.baseSpeed = 100; // 기본 낙하 속도 (200 -> 100으로 감소)
+    this.spawnInterval = 1000;
+    this.baseSpeed = 200;
 
-    // 피버 모드 상태
-    this.isFeverMode = false;
-    this.feverTimer = 0;
-    this.feverDuration = 5; // 5초
-
-    // 플레이어 바구니 설정
+    // 플레이어
     this.basket = {
       x: 0,
       y: 0,
       width: 80,
       height: 80,
-      zone: "Center" // 현재 위치 구역
     };
 
-    // 상태 콜백
+    // Callbacks
     this.onScoreChange = null;
     this.onGameEnd = null;
-    this.onTimeUpdate = null;
+    this.onLivesChange = null; // 생명/쉴드 변경 시 호출
 
-    // 캔버스 컨텍스트
     this.ctx = null;
     this.canvas = null;
   }
 
-  /**
-   * 게임 초기화 및 시작
-   * @param {HTMLCanvasElement} canvas - 게임 렌더링용 캔버스
-   */
   init(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.resizeCanvas();
-
-    // 화면 크기 변경 시 캔버스 리사이징
     window.addEventListener('resize', () => this.resizeCanvas());
   }
 
@@ -66,20 +60,21 @@ class GameEngine {
     this.isGameActive = true;
     this.score = 0;
     this.level = 1;
-    this.timeLimit = 60;
+    this.lives = 3; // 생명 3개로 시작
+    this.hasShield = false;
+
     this.items = [];
     this.currentPose = "Center";
     this.itemSpawnTimer = 0;
-
-    // 난이도 재설정 (쉽게)
-    this.baseSpeed = 100;
-    this.spawnInterval = 2500;
-
-    // 피버 모드 초기화
-    this.isFeverMode = false;
-    this.feverTimer = 0;
+    this.baseSpeed = 200;
+    this.spawnInterval = 1000;
 
     this.lastTime = performance.now();
+
+    // 초기 UI 반영
+    if (this.onLivesChange) this.onLivesChange(this.lives, this.hasShield);
+    if (this.onScoreChange) this.onScoreChange(this.score, this.level);
+
     this.loop();
   }
 
@@ -88,19 +83,20 @@ class GameEngine {
     if (this.gameLoopId) {
       cancelAnimationFrame(this.gameLoopId);
     }
+    // 게임 오버 알림
     if (this.onGameEnd) {
-      this.onGameEnd(this.score, this.level);
+      // 렌더링 루프가 멈춘 뒤 실행되도록 잠시 대기
+      setTimeout(() => {
+        this.onGameEnd(this.score, this.level);
+      }, 50);
     }
   }
 
-  /**
-   * 메인 게임 루프
-   */
   loop() {
     if (!this.isGameActive) return;
 
     const currentTime = performance.now();
-    const deltaTime = (currentTime - this.lastTime) / 1000; // 초 단위
+    const deltaTime = (currentTime - this.lastTime) / 1000;
     this.lastTime = currentTime;
 
     this.update(deltaTime);
@@ -109,56 +105,29 @@ class GameEngine {
     this.gameLoopId = requestAnimationFrame(() => this.loop());
   }
 
-  /**
-   * 게임 상태 업데이트
-   * @param {number} deltaTime - 프레임 간격 (초)
-   */
   update(deltaTime) {
-    // 1. 시간 감소
-    this.timeLimit -= deltaTime;
-    if (this.onTimeUpdate) this.onTimeUpdate(Math.ceil(this.timeLimit));
-
-    if (this.timeLimit <= 0) {
-      this.stop();
-      return;
-    }
-
-    // 1-1. 피버 모드 타이머
-    if (this.isFeverMode) {
-      this.feverTimer -= deltaTime;
-      if (this.feverTimer <= 0) {
-        this.isFeverMode = false;
-        // 피버 종료 시 원래 스폰 간격으로 복구 (레벨 고려)
-        this.spawnInterval = Math.max(500, 2500 - (this.level * 200));
-      }
-    }
-
-    // 2. 아이템 생성
+    // 1. 아이템 생성
     this.itemSpawnTimer += deltaTime * 1000;
-
-    // 피버 모드일 때는 생성 간격을 매우 짧게 (예: 100ms)
-    const currentInterval = this.isFeverMode ? 100 : this.spawnInterval;
-
-    if (this.itemSpawnTimer > currentInterval) {
+    if (this.itemSpawnTimer > this.spawnInterval) {
       this.spawnItem();
       this.itemSpawnTimer = 0;
     }
 
-    // 3. 아이템 이동 및 충돌 처리
+    // 2. 바구니 이동
     this.updateBasketPosition();
 
-    // 역방향 반복을 통해 안전하게 삭제
+    // 3. 아이템 이동 및 충돌
     for (let i = this.items.length - 1; i >= 0; i--) {
       const item = this.items[i];
       item.y += item.speed * deltaTime;
 
-      // 바닥에 닿으면 제거
+      // 화면 아래로 벗어남
       if (item.y > this.canvas.height) {
         this.items.splice(i, 1);
         continue;
       }
 
-      // 충돌 검사
+      // 충돌 체크
       if (this.checkCollision(item)) {
         this.handleItemCollection(item);
         this.items.splice(i, 1);
@@ -166,95 +135,69 @@ class GameEngine {
     }
   }
 
-  /**
-   * 바구니 위치 업데이트
-   */
   updateBasketPosition() {
     const zoneWidth = this.canvas.width / 3;
-    let targetX = zoneWidth / 2; // Center
+    let targetX = zoneWidth / 2;
 
     if (this.currentPose === "Left") {
-      targetX = zoneWidth / 2 - zoneWidth; // 화면 밖 방지 처리 필요
-      targetX = zoneWidth * 0.5; // 1구역 중앙
+      targetX = zoneWidth * 0.5;
     } else if (this.currentPose === "Right") {
-      targetX = zoneWidth * 2.5; // 3구역 중앙
+      targetX = zoneWidth * 2.5;
     } else {
-      targetX = zoneWidth * 1.5; // 2구역 중앙
+      targetX = zoneWidth * 1.5;
     }
 
-    // 부드러운 이동 (선형 보간)
+    // 부드러운 보간 이동
     this.basket.x += (targetX - this.basket.x) * 0.2;
-    this.basket.y = this.canvas.height - 100; // 바닥에서 조금 위
+    this.basket.y = this.canvas.height - 100;
   }
 
-  /**
-   * 아이템 생성
-   */
   spawnItem() {
     const zones = ["Left", "Center", "Right"];
+    const randomZone = zones[Math.floor(Math.random() * zones.length)];
     const zoneWidth = this.canvas.width / 3;
 
-    // 피버 모드: 랜덤 위치 OR 모든 위치 (여기선 랜덤으로 빠르게 생성하는 방식 채택)
-    // 일반 모드: 랜덤 위치
-
-    // 스폰 위치 결정
-    // 피버 모드일 때는 한 번에 여러 개 떨어뜨릴 수도 있지만, 
-    // 간격을 좁히는 것(200ms)이 더 '많이 떨어지는' 느낌을 줄 수 있음.
-    // 여기서는 랜덤 위치 한 곳에 생성하되, 피버 시에는 무조건 과일만.
-
-    const randomZone = zones[Math.floor(Math.random() * zones.length)];
     let x = zoneWidth * 1.5;
     if (randomZone === "Left") x = zoneWidth * 0.5;
     if (randomZone === "Right") x = zoneWidth * 2.5;
 
-    // 아이템 타입 결정
+    // 아이템 타입 확률 조정
+    const rand = Math.random();
     let type = "apple";
-    let speedMult = 1;
 
-    if (this.isFeverMode) {
-      // 피버 모드: 무조건 과일 (점수 높은거 위주?)
-      const rand = Math.random();
-      if (rand < 0.4) type = "orange";
-      else if (rand < 0.7) type = "grape";
-      else type = "apple";
-
-      speedMult = 1.5; // 피버 때는 조금 빠르게 떨어져도 재밌음
+    // 폭탄 비율 증가 (30%)
+    // 선물상자: 매우 희귀 (1%)
+    // 쉴드: 희귀 (2%)
+    if (rand < 0.01) {
+      type = "gift";
+    } else if (rand < 0.03) {
+      type = "shield";
+    } else if (rand < 0.33) {
+      type = "bomb";
+    } else if (rand < 0.6) {
+      type = "grape";
+    } else if (rand < 0.8) {
+      type = "orange";
     } else {
-      // 일반 모드
-      const rand = Math.random();
-      if (rand < 0.05) {
-        type = "gift"; // 5% 확률 선물상자 (10% -> 5%로 감소)
-      } else if (rand < 0.15) {
-        type = "bomb"; // 10% 폭탄 (기존값 유지 -> 10%)
-      } else if (rand < 0.5) {
-        type = "grape";
-      } else if (rand < 0.8) {
-        type = "orange";
-      } else {
-        type = "apple";
-      }
+      type = "apple";
     }
+
+    // 레벨에 따른 속도 증가
+    const speed = this.baseSpeed * (1 + (this.level * 0.1));
 
     this.items.push({
       x: x,
       y: -50,
       type: type,
-      speed: this.baseSpeed * (1 + (this.level * 0.1)) * speedMult
+      speed: speed
     });
   }
 
-  /**
-   * 충돌 감지
-   */
   checkCollision(item) {
-    // 간단한 거리 기반 충돌 (원형)
     const dist = Math.hypot(this.basket.x - item.x, this.basket.y - item.y);
-    return dist < (this.basket.width / 2 + 20); // 20은 아이템 반경 대략값
+    return dist < (this.basket.width / 2 + 20);
   }
 
-  /**
-   * 아이템 획득 처리
-   */
   handleItemCollection(item) {
     let scoreDelta = 0;
 
@@ -262,23 +205,35 @@ class GameEngine {
       case "apple": scoreDelta = 100; break;
       case "orange": scoreDelta = 200; break;
       case "grape": scoreDelta = 300; break;
-      case "bomb": scoreDelta = -500; break;
-      case "gift":
-        scoreDelta = 0;
-        this.activateFeverMode();
+      case "gift": scoreDelta = 1000; break; // 대박 점수
+
+      case "shield":
+        this.hasShield = true;
+        if (this.onLivesChange) this.onLivesChange(this.lives, this.hasShield);
+        break;
+
+      case "bomb":
+        if (this.hasShield) {
+          this.hasShield = false; // 쉴드 파괴
+        } else {
+          this.lives--; // 생명 감소
+          if (this.lives <= 0) {
+            this.stop(); // 게임 오버
+            return;
+          }
+        }
+        if (this.onLivesChange) this.onLivesChange(this.lives, this.hasShield);
+        // 폭탄은 점수 변동 없음 (생존이 목적)
         break;
     }
 
     this.score += scoreDelta;
     if (this.score < 0) this.score = 0;
 
-    // 레벨업 체크
-    if (this.score >= this.level * 500) {
+    // 레벨업 (1000점 마다)
+    if (this.score >= this.level * 1000) {
       this.level++;
-      // 레벨업해도 너무 빨라지지 않게 조절
-      if (!this.isFeverMode) {
-        this.spawnInterval = Math.max(500, 2500 - (this.level * 200));
-      }
+      this.spawnInterval = Math.max(300, 1000 - (this.level * 50));
     }
 
     if (this.onScoreChange) {
@@ -286,32 +241,13 @@ class GameEngine {
     }
   }
 
-  activateFeverMode() {
-    this.isFeverMode = true;
-    this.feverTimer = this.feverDuration;
-    // 피버 모드 즉시 적용을 위해 spawnInterval은 update 루프에서 처리됨
-  }
-
-  /**
-   * 렌더링
-   */
   render() {
     if (!this.ctx) return;
     const ctx = this.ctx;
 
-    // 화면 클리어
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // 피버 모드 배경 효과 (선택)
-    if (this.isFeverMode) {
-      ctx.save();
-      ctx.globalAlpha = 0.1;
-      ctx.fillStyle = "gold";
-      ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-      ctx.restore();
-    }
-
-    // 구역 표시 (선택 사항)
+    // 구역 라인
     const zoneWidth = this.canvas.width / 3;
     ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
     ctx.beginPath();
@@ -321,39 +257,47 @@ class GameEngine {
     ctx.lineTo(zoneWidth * 2, this.canvas.height);
     ctx.stroke();
 
-    // 바구니 그리기
+    // 쉴드 이펙트
+    if (this.hasShield) {
+      ctx.save();
+      ctx.fillStyle = "rgba(100, 200, 255, 0.3)";
+      ctx.strokeStyle = "#00ffff";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(this.basket.x, this.basket.y, 60, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 바구니
     ctx.fillStyle = "#FFD700";
     ctx.font = "60px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("🧺", this.basket.x, this.basket.y);
 
-    // 아이템 그리기
+    // 아이템
     this.items.forEach(item => {
       let icon = "🍎";
       if (item.type === "orange") icon = "🍊";
       if (item.type === "grape") icon = "🍇";
       if (item.type === "bomb") icon = "💣";
       if (item.type === "gift") icon = "🎁";
+      if (item.type === "shield") icon = "🛡️";
 
       ctx.font = "50px sans-serif";
       ctx.fillText(icon, item.x, item.y);
     });
   }
 
-  /**
-   * 포즈 인식 결과 업데이트
-   */
   onPoseDetected(detectedPose) {
-    // 포즈 문자열 정규화 (소문자 처리 등 안전장치)
-    // Left, Center, Right가 들어와야 함
     this.currentPose = detectedPose;
   }
 
-  // Setters for callbacks
   setScoreChangeCallback(callback) { this.onScoreChange = callback; }
   setGameEndCallback(callback) { this.onGameEnd = callback; }
-  setTimeUpdateCallback(callback) { this.onTimeUpdate = callback; }
+  setLivesChangeCallback(callback) { this.onLivesChange = callback; }
 }
 
 window.GameEngine = GameEngine;

@@ -4,41 +4,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fruit Catcher AI Game</title>
+  <title>Fruit Catcher: Survival</title>
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/menu_style.css">
 </head>
 
 <body>
   <div class="container">
     <header>
-      <h1>🍎 Fruit Catcher</h1>
-      <p class="subtitle">몸을 움직여 떨어지는 과일을 받아보세요!</p>
+      <h1>Fruit Catcher: Survival</h1>
+      <p class="subtitle">폭탄을 피해 최대한 오래 생존하세요!</p>
     </header>
 
-    <!-- 게임 시작 메뉴화면 -->
-    <div id="start-screen" class="active">
-      <h2>컨트롤 방식 선택</h2>
-      <div class="menu-buttons">
-        <button id="btn-pose" class="menu-btn">
-          <span class="icon">📷</span>
-          <span class="text">카메라 (몸으로 하기)</span>
-        </button>
-        <button id="btn-keyboard" class="menu-btn">
-          <span class="icon">⌨️</span>
-          <span class="text">키보드 (방향키)</span>
-        </button>
-      </div>
-      <div class="instruction-box"
-        style="margin-top: 20px; font-size: 0.95rem; color: #555; background: #fff; padding: 15px; border-radius: 10px; display: inline-block;">
-        <p><strong>💡 키보드 모드 설명</strong></p>
-        <p>왼쪽 화살표(←)와 오른쪽 화살표(→) 키를 눌러<br>바구니를 좌우로 움직이세요.</p>
-      </div>
-    </div>
-
-    <div id="game-area-container" class="game-area" style="display: none;">
+    <div class="game-area">
       <div class="canvas-wrapper">
-        <!-- 웹캠 화면 (Pose 모드일 때만 보임) -->
+        <!-- 웹캠 화면 -->
         <div id="webcam-container"></div>
         <!-- 게임 오버레이 캔버스 -->
         <canvas id="game-canvas"></canvas>
@@ -47,26 +26,18 @@
       <div class="ui-panel">
         <div class="score-board">
           <div class="score-pannel">
-            <span class="label">HIGH SCORE</span>
-            <span id="high-score">0</span>
-          </div>
-          <div class="score-pannel">
             <span class="label">SCORE</span>
             <span id="score">0</span>
           </div>
           <div class="score-pannel">
-            <span class="label">LEVEL</span>
-            <span id="level">1</span>
-          </div>
-          <div class="score-pannel">
-            <span class="label">TIME</span>
-            <span id="time">60</span>
+            <span class="label">LIVES</span>
+            <span id="lives">❤️❤️❤️</span>
           </div>
         </div>
 
         <div class="control-panel">
           <button id="start-btn" class="btn primary">GAME START</button>
-          <button id="stop-btn" class="btn secondary" style="display:none;">STOP</button>
+          <button id="back-btn" class="btn secondary" style="display:none;">BACK TO MENU</button>
         </div>
 
         <div class="status-panel">
@@ -77,11 +48,16 @@
             <span class="pose-tag right">Right</span>
           </div>
         </div>
+
+        <div class="guide-panel">
+          <p>🍎 +100 | 💣 생명감소</p>
+          <p>🛡️ 방어막 | 🎁 보너스</p>
+        </div>
       </div>
     </div>
 
     <!-- 로딩 오버레이 -->
-    <div id="loading" class="overlay">
+    <div id="loading" class="overlay active">
       <div class="spinner"></div>
       <p>AI 모델을 로딩 중입니다...</p>
     </div>
