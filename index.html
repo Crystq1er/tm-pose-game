@@ -1,30 +1,73 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Teachable Machine Pose Model</title>
-    <link rel="stylesheet" href="./css/style.css" />
-  </head>
-  <body>
-    <h1>Teachable Machine Pose Model</h1>
-    <div class="button-container">
-      <button type="button" id="startBtn" onclick="init()">Start</button>
-      <button type="button" id="stopBtn" onclick="stop()" disabled>Stop</button>
-    </div>
-    <div class="canvas-container">
-      <canvas id="canvas"></canvas>
-      <div id="max-prediction"></div>
-    </div>
-    <div id="label-container"></div>
 
-    <!-- Teachable Machine 라이브러리 -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fruit Catcher AI Game</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
 
-    <!-- 애플리케이션 모듈 -->
-    <script src="./js/stabilizer.js"></script>
-    <script src="./js/poseEngine.js"></script>
-    <script src="./js/gameEngine.js"></script>
-    <script src="./js/main.js"></script>
-  </body>
+<body>
+  <div class="container">
+    <header>
+      <h1>🍎 Fruit Catcher AI</h1>
+      <p class="subtitle">몸을 움직여 떨어지는 과일을 받아보세요!</p>
+    </header>
+
+    <div class="game-area">
+      <div class="canvas-wrapper">
+        <!-- 웹캠 화면 -->
+        <div id="webcam-container"></div>
+        <!-- 게임 오버레이 캔버스 -->
+        <canvas id="game-canvas"></canvas>
+      </div>
+
+      <div class="ui-panel">
+        <div class="score-board">
+          <div class="score-pannel">
+            <span class="label">SCORE</span>
+            <span id="score">0</span>
+          </div>
+          <div class="score-pannel">
+            <span class="label">LEVEL</span>
+            <span id="level">1</span>
+          </div>
+          <div class="score-pannel">
+            <span class="label">TIME</span>
+            <span id="time">60</span>
+          </div>
+        </div>
+
+        <div class="control-panel">
+          <button id="start-btn" class="btn primary">GAME START</button>
+          <button id="stop-btn" class="btn secondary" style="display:none;">STOP</button>
+        </div>
+
+        <div class="status-panel">
+          <p>현재 상태: <span id="status-label">대기 중...</span></p>
+          <div class="pose-indicator">
+            <span class="pose-tag left">Left</span>
+            <span class="pose-tag center active">Center</span>
+            <span class="pose-tag right">Right</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 로딩 오버레이 -->
+    <div id="loading" class="overlay active">
+      <div class="spinner"></div>
+      <p>AI 모델을 로딩 중입니다...</p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
+
+  <script src="js/poseEngine.js"></script>
+  <script src="js/gameEngine.js"></script>
+  <script src="js/main.js"></script>
+</body>
+
 </html>
