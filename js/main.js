@@ -11,6 +11,7 @@ const dom = {
   webcamContainer: document.getElementById('webcam-container'),
   gameCanvas: document.getElementById('game-canvas'),
   score: document.getElementById('score'),
+  highScore: document.getElementById('high-score'),
   level: document.getElementById('level'),
   time: document.getElementById('time'),
   statusLabel: document.getElementById('status-label'),
@@ -29,6 +30,10 @@ const dom = {
  */
 async function init() {
   try {
+    // 0. High Score 로드
+    const storedHighScore = localStorage.getItem('fruitCatcherHighScore') || 0;
+    dom.highScore.innerText = storedHighScore;
+
     // 1. GameEngine 초기화
     gameEngine = new GameEngine();
     gameEngine.init(dom.gameCanvas);
@@ -44,7 +49,16 @@ async function init() {
     });
 
     gameEngine.setGameEndCallback((finalScore, finalLevel) => {
-      alert(`🎉 게임 종료!\n최종 점수: ${finalScore}\n최종 레벨: ${finalLevel}`);
+      // High Score 갱신로직
+      let currentHighScore = parseInt(localStorage.getItem('fruitCatcherHighScore') || 0);
+      if (finalScore > currentHighScore) {
+        localStorage.setItem('fruitCatcherHighScore', finalScore);
+        dom.highScore.innerText = finalScore;
+        alert(`🎉 신기록 달성!\n최종 점수: ${finalScore}\n최종 레벨: ${finalLevel}`);
+      } else {
+        alert(`🎉 게임 종료!\n최종 점수: ${finalScore}\n최종 레벨: ${finalLevel}`);
+      }
+
       dom.startBtn.style.display = 'inline-block';
       dom.stopBtn.style.display = 'none';
       dom.statusLabel.innerText = "게임 종료 (다시 하려면 Start 버튼)";

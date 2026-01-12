@@ -16,8 +16,13 @@ class GameEngine {
     // 게임 오브젝트 설정
     this.items = []; // 낙하물 배열
     this.itemSpawnTimer = 0;
-    this.spawnInterval = 1000; // 1초마다 생성
-    this.baseSpeed = 200; // 기본 낙하 속도 (픽셀/초)
+    this.spawnInterval = 2500; // 2.5초마다 생성 (초기값 증가)
+    this.baseSpeed = 100; // 기본 낙하 속도 (200 -> 100으로 감소)
+
+    // 피버 모드 상태
+    this.isFeverMode = false;
+    this.feverTimer = 0;
+    this.feverDuration = 5; // 5초
 
     // 플레이어 바구니 설정
     this.basket = {
@@ -65,8 +70,14 @@ class GameEngine {
     this.items = [];
     this.currentPose = "Center";
     this.itemSpawnTimer = 0;
-    this.baseSpeed = 200;
-    this.spawnInterval = 1000;
+
+    // 난이도 재설정 (쉽게)
+    this.baseSpeed = 100;
+    this.spawnInterval = 2500;
+
+    // 피버 모드 초기화
+    this.isFeverMode = false;
+    this.feverTimer = 0;
 
     this.lastTime = performance.now();
     this.loop();
@@ -112,9 +123,23 @@ class GameEngine {
       return;
     }
 
+    // 1-1. 피버 모드 타이머
+    if (this.isFeverMode) {
+      this.feverTimer -= deltaTime;
+      if (this.feverTimer <= 0) {
+        this.isFeverMode = false;
+        // 피버 종료 시 원래 스폰 간격으로 복구 (레벨 고려)
+        this.spawnInterval = Math.max(500, 2500 - (this.level * 200));
+      }
+    }
+
     // 2. 아이템 생성
     this.itemSpawnTimer += deltaTime * 1000;
-    if (this.itemSpawnTimer > this.spawnInterval) {
+
+    // 피버 모드일 때는 생성 간격을 매우 짧게 (예: 200ms)
+    const currentInterval = this.isFeverMode ? 200 : this.spawnInterval;
+
+    if (this.itemSpawnTimer > currentInterval) {
       this.spawnItem();
       this.itemSpawnTimer = 0;
     }
@@ -167,25 +192,54 @@ class GameEngine {
    */
   spawnItem() {
     const zones = ["Left", "Center", "Right"];
-    const randomZone = zones[Math.floor(Math.random() * zones.length)];
     const zoneWidth = this.canvas.width / 3;
 
+    // 피버 모드: 랜덤 위치 OR 모든 위치 (여기선 랜덤으로 빠르게 생성하는 방식 채택)
+    // 일반 모드: 랜덤 위치
+
+    // 스폰 위치 결정
+    // 피버 모드일 때는 한 번에 여러 개 떨어뜨릴 수도 있지만, 
+    // 간격을 좁히는 것(200ms)이 더 '많이 떨어지는' 느낌을 줄 수 있음.
+    // 여기서는 랜덤 위치 한 곳에 생성하되, 피버 시에는 무조건 과일만.
+
+    const randomZone = zones[Math.floor(Math.random() * zones.length)];
     let x = zoneWidth * 1.5;
     if (randomZone === "Left") x = zoneWidth * 0.5;
     if (randomZone === "Right") x = zoneWidth * 2.5;
 
-    // 아이템 타입 결정 (랜덤)
-    const rand = Math.random();
+    // 아이템 타입 결정
     let type = "apple";
-    if (rand < 0.2) type = "bomb"; // 20% 폭탄
-    else if (rand < 0.4) type = "grape"; // 20% 포도
-    else if (rand < 0.7) type = "orange"; // 30% 오렌지
+    let speedMult = 1;
+
+    if (this.isFeverMode) {
+      // 피버 모드: 무조건 과일 (점수 높은거 위주?)
+      const rand = Math.random();
+      if (rand < 0.4) type = "orange";
+      else if (rand < 0.7) type = "grape";
+      else type = "apple";
+
+      speedMult = 1.5; // 피버 때는 조금 빠르게 떨어져도 재밌음
+    } else {
+      // 일반 모드
+      const rand = Math.random();
+      if (rand < 0.1) {
+        type = "gift"; // 10% 확률 선물상자
+      } else if (rand < 0.3) {
+        type = "bomb"; // 20% 폭탄
+      } else if (rand < 0.5) {
+        type = "grape";
+      } else if (rand < 0.8) {
+        type = "orange";
+      } else {
+        type = "apple";
+      }
+    }
 
     this.items.push({
       x: x,
       y: -50,
       type: type,
-      speed: this.baseSpeed * (1 + (this.level * 0.1)) // 레벨 비례 속도 증가
+      speed: this.baseSpeed * (1 + (this.level * 0.1)) * speedMult
     });
   }
 
@@ -209,6 +263,10 @@ class GameEngine {
       case "orange": scoreDelta = 200; break;
       case "grape": scoreDelta = 300; break;
       case "bomb": scoreDelta = -500; break;
+      case "gift":
+        scoreDelta = 0;
+        this.activateFeverMode();
+        break;
     }
 
     this.score += scoreDelta;
@@ -217,12 +275,21 @@ class GameEngine {
     // 레벨업 체크
     if (this.score >= this.level * 500) {
       this.level++;
-      this.spawnInterval = Math.max(200, 1000 - (this.level * 100)); // 생성 주기 감소
+      // 레벨업해도 너무 빨라지지 않게 조절
+      if (!this.isFeverMode) {
+        this.spawnInterval = Math.max(500, 2500 - (this.level * 200));
+      }
     }
 
     if (this.onScoreChange) {
       this.onScoreChange(this.score, this.level);
     }
+  }
+
+  activateFeverMode() {
+    this.isFeverMode = true;
+    this.feverTimer = this.feverDuration;
+    // 피버 모드 즉시 적용을 위해 spawnInterval은 update 루프에서 처리됨
   }
 
   /**
@@ -234,6 +301,15 @@ class GameEngine {
 
     // 화면 클리어
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // 피버 모드 배경 효과 (선택)
+    if (this.isFeverMode) {
+      ctx.save();
+      ctx.globalAlpha = 0.1;
+      ctx.fillStyle = "gold";
+      ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      ctx.restore();
+    }
 
     // 구역 표시 (선택 사항)
     const zoneWidth = this.canvas.width / 3;
@@ -258,6 +334,7 @@ class GameEngine {
       if (item.type === "orange") icon = "🍊";
       if (item.type === "grape") icon = "🍇";
       if (item.type === "bomb") icon = "💣";
+      if (item.type === "gift") icon = "🎁";
 
       ctx.font = "50px sans-serif";
       ctx.fillText(icon, item.x, item.y);
