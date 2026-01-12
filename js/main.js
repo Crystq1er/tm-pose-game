@@ -82,6 +82,8 @@ async function startGame(mode) {
     } else if (inputMode === 'keyboard') {
       initKeyboardInput();
       dom.webcamContainer.style.display = 'none'; // 웹캠 영역 숨김
+      // 배경색 변경 (검은 폭탄이 보이도록)
+      document.querySelector('.canvas-wrapper').style.background = '#87CEEB'; // Sky Blue
       dom.statusLabel.innerText = "키보드 모드: ← 왼쪽, → 오른쪽";
     }
 
