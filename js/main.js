@@ -1,80 +1,87 @@
 /**
  * main.js
- * Fruit Catcher: Survival Controller
+ * Fruit Catcher: Integrated Controller
  */
 
 let poseEngine, gameEngine;
 let isInitialized = false;
 
-// DOM Elements
+// DOM Elements Manager
 const dom = {
+  // Screens
+  menuScreen: document.getElementById('menu-screen'),
+  gameScreen: document.getElementById('game-screen'),
+
+  // Overlays
+  loading: document.getElementById('loading'),
+  gameOver: document.getElementById('game-over'),
+
+  // Game Areas
   webcamContainer: document.getElementById('webcam-container'),
   gameCanvas: document.getElementById('game-canvas'),
+
+  // UI Info
   score: document.getElementById('score'),
   lives: document.getElementById('lives'),
-  statusLabel: document.getElementById('status-label'),
-  startBtn: document.getElementById('start-btn'),
-  backBtn: document.getElementById('back-btn'),
-  loading: document.getElementById('loading'),
-  poseIndicators: {
-    Left: document.querySelector('.pose-tag.left'),
-    Center: document.querySelector('.pose-tag.center'),
-    Right: document.querySelector('.pose-tag.right')
+  poseLabel: document.getElementById('pose-label'),
+  finalScore: document.getElementById('final-score'),
+
+  // Buttons
+  mainStartBtn: document.getElementById('main-start-btn'),
+  backToMenuBtn: document.getElementById('back-to-menu-btn'),
+  restartBtn: document.getElementById('restart-btn'),
+  goMenuBtn: document.getElementById('go-menu-btn'),
+
+  // Indicators
+  indicators: {
+    Left: document.querySelector('.tag.left'),
+    Center: document.querySelector('.tag.center'),
+    Right: document.querySelector('.tag.right')
   }
 };
 
 /**
- * 초기화 Function
+ * App Initialization
  */
 async function init() {
   try {
-    // 1. GameEngine 초기화
+    // 1. Setup Engines
     gameEngine = new GameEngine();
     gameEngine.init(dom.gameCanvas);
 
-    // 점수 업데이트
+    // Wire up Game Engine Callbacks
     gameEngine.setScoreChangeCallback((score, level) => {
-      dom.score.innerText = score.toLocaleString(); // 쉼표 추가
+      dom.score.innerText = score.toLocaleString();
     });
 
-    // 생명/쉴드 업데이트
     gameEngine.setLivesChangeCallback((lives, hasShield) => {
-      let hearts = "";
-      for (let i = 0; i < lives; i++) hearts += "❤️";
-
-      if (hasShield) {
-        hearts += " 🛡️";
-      }
-
-      // 생명이 0이면 해골 표시 (잠시)
-      if (lives <= 0) hearts = "💀 GAME OVER";
-
-      dom.lives.innerText = hearts || "💔";
+      let display = "❤️".repeat(Math.max(0, lives));
+      if (lives <= 0) display = "💀";
+      if (hasShield) display += " 🛡️";
+      dom.lives.innerText = display;
     });
 
-    // 게임 종료 처리
-    gameEngine.setGameEndCallback((finalScore, finalLevel) => {
-      alert(`☠️ 게임 오버! ☠️\n\n최종 점수: ${finalScore}\n도달 레벨: ${finalLevel}`);
-      resetUI();
+    gameEngine.setGameEndCallback((score) => {
+      showGameOver(score);
     });
 
-    // 2. PoseEngine 초기화
+    // 2. Setup Pose Engine
     poseEngine = new PoseEngine("./my_model/");
     await poseEngine.init({ size: 200, flip: true });
 
-    // 웹캠 캔버스 (오버레이용)
     if (poseEngine.webcam.canvas) {
+      // Adjust style for container fitting
+      poseEngine.webcam.canvas.style.width = "100%";
+      poseEngine.webcam.canvas.style.height = "100%";
       dom.webcamContainer.appendChild(poseEngine.webcam.canvas);
     }
 
-    // 예측 결과 처리
-    poseEngine.setPredictionCallback((prediction, pose) => {
+    poseEngine.setPredictionCallback((prediction) => {
       if (!isInitialized) return;
 
-      // 가장 높은 확률의 클래스 찾기
+      // Find Max Prob
       let maxClass = "";
       let maxProb = 0;
-
       prediction.forEach(p => {
         if (p.probability > maxProb) {
           maxProb = p.probability;
@@ -82,7 +89,7 @@ async function init() {
         }
       });
 
-      if (maxProb > 0.8) { // 80% 이상 확신
+      if (maxProb > 0.8) {
         updatePoseUI(maxClass);
         if (gameEngine.isGameActive) {
           gameEngine.onPoseDetected(maxClass);
@@ -90,58 +97,84 @@ async function init() {
       }
     });
 
+    // Start Pose Loop
     poseEngine.start();
     isInitialized = true;
 
-    // 로딩 완료
+    // Ready
     dom.loading.classList.remove('active');
-    dom.statusLabel.innerText = "준비 완료! Start 버튼을 누르세요.";
-    dom.startBtn.disabled = false;
 
-  } catch (err) {
-    console.error(err);
-    alert("초기화 실패: 카메라를 확인할 수 없습니다.");
-    dom.loading.innerText = "오류: " + err.message;
+  } catch (e) {
+    console.error(e);
+    alert("오류 발생: 카메라를 확인해주세요.\n" + e.message);
   }
 }
 
 /**
- * 포즈 UI 업데이트
+ * Screen Navigation Logic
  */
-function updatePoseUI(currentClass) {
-  Object.values(dom.poseIndicators).forEach(el => el && el.classList.remove('active'));
+function showScreen(screenName) {
+  // Hide all screens
+  dom.menuScreen.classList.remove('active');
+  dom.gameScreen.classList.remove('active');
 
-  if (dom.poseIndicators[currentClass]) {
-    dom.poseIndicators[currentClass].classList.add('active');
-    dom.statusLabel.innerText = `현재 자세: ${currentClass}`;
+  // Hide all overlays
+  dom.gameOver.classList.remove('active');
+
+  // Show target
+  if (screenName === 'menu') {
+    dom.menuScreen.classList.add('active');
+    gameEngine.stop(); // Stop game if running
+  } else if (screenName === 'game') {
+    dom.gameScreen.classList.add('active');
+    // We will start game explicitly via button click logic, 
+    // but here we just show the screen.
+    // Resize canvas just in case
+    gameEngine.resizeCanvas();
   }
 }
 
-/**
- * UI 초기화 (메뉴로 복귀)
- */
-function resetUI() {
-  gameEngine.stop();
-  dom.startBtn.style.display = 'inline-block';
-  dom.backBtn.style.display = 'none';
-  dom.statusLabel.innerText = "준비 완료!";
-  dom.lives.innerText = "❤️❤️❤️";
-  dom.score.innerText = "0";
+function updatePoseUI(poseName) {
+  // Update Text
+  dom.poseLabel.innerText = poseName;
+
+  // Update Tags
+  Object.values(dom.indicators).forEach(el => el.classList.remove('active'));
+  if (dom.indicators[poseName]) {
+    dom.indicators[poseName].classList.add('active');
+  }
 }
 
-// 이벤트 리스너
-dom.startBtn.addEventListener('click', () => {
+function showGameOver(score) {
+  dom.finalScore.innerText = score.toLocaleString();
+  dom.gameOver.classList.add('active');
+}
+
+/* Event Listeners */
+
+// 1. Menu -> Game Start
+dom.mainStartBtn.addEventListener('click', () => {
+  showScreen('game');
   gameEngine.start();
-  dom.startBtn.style.display = 'none';
-  dom.backBtn.style.display = 'inline-block';
-  dom.statusLabel.innerText = "생존하세요! 폭탄 조심!";
 });
 
-dom.backBtn.addEventListener('click', () => {
-  if (confirm("게임을 중단하고 메뉴로 돌아가시겠습니까?")) {
-    resetUI();
+// 2. Game View -> Back to Menu
+dom.backToMenuBtn.addEventListener('click', () => {
+  if (confirm("게임을 중단하고 메뉴로 돌아갈까요?")) {
+    showScreen('menu');
   }
 });
 
-// 실행
+// 3. Game Over -> Restart
+dom.restartBtn.addEventListener('click', () => {
+  dom.gameOver.classList.remove('active');
+  gameEngine.start(); // Restart game directly
+});
+
+// 4. Game Over -> Go Menu
+dom.goMenuBtn.addEventListener('click', () => {
+  showScreen('menu');
+});
+
+// Boot
 window.addEventListener('load', init);

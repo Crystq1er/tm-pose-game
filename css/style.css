@@ -1,224 +1,338 @@
 @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
 
+:root {
+    --primary-color: #ff6b6b;
+    --secondary-color: #4ecdc4;
+    --accent-color: #ffe66d;
+    --bg-color: #f7f9fc;
+    --text-color: #2c3e50;
+}
+
 body {
     font-family: 'Jua', sans-serif;
     margin: 0;
-    background: #f0f8ff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+    padding: 0;
+    background: var(--bg-color);
+    color: var(--text-color);
+    height: 100vh;
     overflow: hidden;
 }
 
-.container {
-    text-align: center;
-    width: 90%;
-    max-width: 1200px;
-}
-
-header {
-    margin-bottom: 20px;
-}
-
-h1 {
-    font-size: 3rem;
-    color: #ff6b6b;
-    margin: 0;
-    text-shadow: 2px 2px 0px #fff;
-    -webkit-text-stroke: 1px #fff;
-}
-
-.subtitle {
-    font-size: 1.2rem;
-    color: #555;
-    margin-top: 5px;
-}
-
-.game-area {
-    display: flex;
-    gap: 30px;
-    justify-content: center;
-    align-items: flex-start;
-    flex-wrap: wrap;
-}
-
-/* 캔버스 영역 */
-.canvas-wrapper {
+.main-container {
+    width: 100%;
+    height: 100%;
     position: relative;
-    width: 600px;
-    height: 600px;
-    background: #000;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    border: 5px solid #fff;
 }
 
-#webcam-container,
-#game-canvas {
+/* 화면 관리 */
+.screen {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
+    display: none;
+    /* 기본 숨김 */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-color);
+}
+
+.screen.active {
+    display: flex;
+}
+
+/* 1. 메뉴 화면 스타일 */
+#menu-screen {
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe3e3 100%);
+}
+
+.menu-content {
+    text-align: center;
+    background: white;
+    padding: 40px;
+    border-radius: 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 90%;
+}
+
+.logo {
+    font-size: 3.5rem;
+    color: var(--primary-color);
+    margin: 0 0 10px 0;
+    text-shadow: 2px 2px 0 #fff, 4px 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+.how-to-play {
+    text-align: left;
+    background: #fafafa;
+    padding: 20px;
+    border-radius: 15px;
+    margin: 30px 0;
+    border: 2px dashed #eee;
+}
+
+.how-to-play h3 {
+    margin-top: 0;
+    color: #555;
+}
+
+.how-to-play p {
+    margin: 8px 0;
+    font-size: 1.1rem;
+}
+
+/* 버튼 스타일 */
+.btn {
+    border: none;
+    border-radius: 12px;
+    font-family: 'Jua', cursive;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn.large {
+    padding: 15px 40px;
+    font-size: 2rem;
+    background: var(--primary-color);
+    color: white;
+    box-shadow: 0 6px 0 #c0392b;
+}
+
+.btn.primary {
+    padding: 12px 24px;
+    font-size: 1.2rem;
+    background: #2196f3;
+    color: white;
+    box-shadow: 0 4px 0 #1565c0;
+}
+
+.btn.secondary {
+    padding: 12px 24px;
+    font-size: 1.2rem;
+    background: #757575;
+    color: white;
+    box-shadow: 0 4px 0 #424242;
+}
+
+.btn.small {
+    padding: 8px 16px;
+    font-size: 1rem;
+    background: #607d8b;
+    color: white;
+}
+
+.pulse {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* 2. 게임 화면 스타일 */
+.game-header {
+    width: 100%;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+    z-index: 10;
+}
+
+.game-title {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    margin-left: 20px;
+    font-weight: bold;
+}
+
+.game-layout {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+}
+
+.view-panel {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+}
+
+.view-panel h3 {
+    margin: 0 0 15px 0;
+    text-align: center;
+    color: #555;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+
+/* 카메라 패널 */
+.webcam-panel {
+    width: 300px;
+}
+
+.game-panel {
+    flex: 1;
+    max-width: 800px;
+    position: relative;
+}
+
+.info-panel {
+    width: 250px;
+}
+
+.canvas-box {
+    flex: 1;
+    background: #000;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    border: 2px solid #eee;
+}
+
+#webcam-container,
+#game-canvas {
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 
 #webcam-container canvas {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0.5;
-    /* 웹캠 투명도 조절 */
     transform: scaleX(-1);
-    /* 좌우 반전 필터 (CSS로 확실하게) */
 }
 
-/* UI 패널 */
-.ui-panel {
-    flex: 1;
-    min-width: 320px;
-    background: white;
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+/* 포즈 상태 */
+.pose-status {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.pose-indicators {
     display: flex;
-    flex-direction: column;
-    gap: 20px;
-    height: 600px;
-    /* 캔버스 높이와 맞춤 */
-    box-sizing: border-box;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 5px;
 }
 
-.score-board {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
+.tag {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    background: #e0e0e0;
+    border-radius: 5px;
+    color: #999;
 }
 
-.score-pannel {
+.tag.active {
+    background: var(--secondary-color);
+    color: white;
+    font-weight: bold;
+    transform: scale(1.1);
+}
+
+/* Score Board */
+.score-card {
     background: #e3f2fd;
     padding: 15px;
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
+    border-radius: 10px;
+    text-align: center;
+    margin-bottom: 15px;
 }
 
-.score-pannel .label {
+.score-card .label {
     font-size: 0.9rem;
     color: #666;
-    margin-bottom: 5px;
+    display: block;
 }
 
-.score-pannel span[id] {
-    font-size: 1.8rem;
-    color: #1976d2;
+.score-card span[id] {
+    font-size: 2rem;
     font-weight: bold;
+    color: #1976d2;
 }
 
-/* 생명 표시 (하트) 색상 */
 #lives {
     color: #e91e63 !important;
 }
 
-.control-panel {
-    margin-top: 20px;
-}
-
-.control-panel button {
-    width: 100%;
-    padding: 15px;
-    font-size: 1.5rem;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    font-family: 'Jua', sans-serif;
-    transition: all 0.2s;
-}
-
-.btn.primary {
-    background: linear-gradient(135deg, #4caf50, #43a047);
-    color: white;
-    box-shadow: 0 4px 0 #2e7d32;
-}
-
-.btn.secondary {
-    background: linear-gradient(135deg, #f44336, #e53935);
-    color: white;
-    box-shadow: 0 4px 0 #c62828;
-}
-
-.btn:active {
-    transform: translateY(4px);
-    box-shadow: none;
-}
-
-.status-panel {
+.item-guide {
     margin-top: auto;
-    background: #f5f5f5;
-    padding: 15px;
-    border-radius: 12px;
-}
-
-.pose-indicator {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
-}
-
-.pose-tag {
-    padding: 8px 15px;
-    background: #e0e0e0;
-    border-radius: 20px;
-    font-size: 1rem;
-    color: #9e9e9e;
-    font-weight: bold;
-}
-
-.pose-tag.active {
-    background: #2196f3;
-    color: white;
-    box-shadow: 0 2px 5px rgba(33, 150, 243, 0.4);
-    transform: scale(1.1);
-}
-
-.guide-panel {
-    font-size: 0.9rem;
-    color: #888;
     background: #fafafa;
+    border-radius: 10px;
     padding: 10px;
-    border-radius: 8px;
-    border: 1px dashed #ccc;
 }
 
-.guide-panel p {
+.item-row {
+    font-size: 0.9rem;
     margin: 5px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #666;
 }
 
-/* 로딩 오버레이 */
+.item-row span {
+    font-size: 1.2rem;
+}
+
+
+/* 오버레이 (로딩, 게임오버) */
 .overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(0, 0, 0, 0.8);
     display: none;
     justify-content: center;
     align-items: center;
-    flex-direction: column;
-    z-index: 1000;
+    z-index: 100;
 }
 
 .overlay.active {
     display: flex;
 }
 
-.spinner {
+.loader {
     width: 50px;
     height: 50px;
-    border: 5px solid #eee;
-    border-top-color: #2196f3;
+    border: 5px solid #fff;
+    border-top-color: var(--primary-color);
     border-radius: 50%;
     animation: spin 1s infinite linear;
     margin-bottom: 20px;
@@ -228,4 +342,43 @@ h1 {
     to {
         transform: rotate(360deg);
     }
+}
+
+.modal {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    width: 300px;
+    animation: popIn 0.3s;
+}
+
+@keyframes popIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.modal h2 {
+    margin: 0 0 10px 0;
+    color: #f44336;
+}
+
+.big-score {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #1976d2;
+    margin: 10px 0 30px 0;
+}
+
+.btn-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
 }
