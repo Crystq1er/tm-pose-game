@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fruit Catcher AI Game</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/menu_style.css">
 </head>
 
 <body>
@@ -15,9 +16,29 @@
       <p class="subtitle">몸을 움직여 떨어지는 과일을 받아보세요!</p>
     </header>
 
-    <div class="game-area">
+    <header>
+      <h1>🍎 Fruit Catcher AI</h1>
+      <p class="subtitle">몸을 움직여 떨어지는 과일을 받아보세요!</p>
+    </header>
+
+    <!-- 게임 시작 메뉴화면 -->
+    <div id="start-screen" class="active">
+      <h2>컨트롤 방식 선택</h2>
+      <div class="menu-buttons">
+        <button id="btn-pose" class="menu-btn">
+          <span class="icon">📷</span>
+          <span class="text">카메라 (몸으로 하기)</span>
+        </button>
+        <button id="btn-keyboard" class="menu-btn">
+          <span class="icon">⌨️</span>
+          <span class="text">키보드 (방향키)</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="game-area-container" class="game-area" style="display: none;">
       <div class="canvas-wrapper">
-        <!-- 웹캠 화면 -->
+        <!-- 웹캠 화면 (Pose 모드일 때만 보임) -->
         <div id="webcam-container"></div>
         <!-- 게임 오버레이 캔버스 -->
         <canvas id="game-canvas"></canvas>

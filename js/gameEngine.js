@@ -222,10 +222,10 @@ class GameEngine {
     } else {
       // 일반 모드
       const rand = Math.random();
-      if (rand < 0.1) {
-        type = "gift"; // 10% 확률 선물상자
-      } else if (rand < 0.2) {
-        type = "bomb"; // 10% 폭탄 (기존 20% -> 10%로 감소)
+      if (rand < 0.05) {
+        type = "gift"; // 5% 확률 선물상자 (10% -> 5%로 감소)
+      } else if (rand < 0.15) {
+        type = "bomb"; // 10% 폭탄 (기존값 유지 -> 10%)
       } else if (rand < 0.5) {
         type = "grape";
       } else if (rand < 0.8) {

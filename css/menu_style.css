@@ -1,0 +1,65 @@
+/* 기존 스타일에 추가 */
+#start-screen {
+    text-align: center;
+    padding: 40px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    margin: 20px auto;
+    max-width: 600px;
+    display: none;
+    /* JS로 제어 */
+}
+
+#start-screen.active {
+    display: block;
+}
+
+#start-screen h2 {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 30px;
+}
+
+.menu-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.menu-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 150px;
+    height: 150px;
+    border: none;
+    border-radius: 15px;
+    background: white;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.menu-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    background: #f8f9fa;
+}
+
+.menu-btn .icon {
+    font-size: 3rem;
+    margin-bottom: 10px;
+}
+
+.menu-btn .text {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #555;
+}
+
+/* 게임 영역 기본 숨김 처리는 인라인 스타일로 제어하거나 여기서 */
+.game-area {
+    /* display: none; 초기에는 숨김 */
+}
