@@ -136,8 +136,8 @@ class GameEngine {
     // 2. 아이템 생성
     this.itemSpawnTimer += deltaTime * 1000;
 
-    // 피버 모드일 때는 생성 간격을 매우 짧게 (예: 200ms)
-    const currentInterval = this.isFeverMode ? 200 : this.spawnInterval;
+    // 피버 모드일 때는 생성 간격을 매우 짧게 (예: 100ms)
+    const currentInterval = this.isFeverMode ? 100 : this.spawnInterval;
 
     if (this.itemSpawnTimer > currentInterval) {
       this.spawnItem();
@@ -224,8 +224,8 @@ class GameEngine {
       const rand = Math.random();
       if (rand < 0.1) {
         type = "gift"; // 10% 확률 선물상자
-      } else if (rand < 0.3) {
-        type = "bomb"; // 20% 폭탄
+      } else if (rand < 0.2) {
+        type = "bomb"; // 10% 폭탄 (기존 20% -> 10%로 감소)
       } else if (rand < 0.5) {
         type = "grape";
       } else if (rand < 0.8) {
