@@ -124,7 +124,7 @@ function showScreen(screenName) {
   // Show target
   if (screenName === 'menu') {
     dom.menuScreen.classList.add('active');
-    gameEngine.stop(); // Stop game if running
+    gameEngine.stop(false); // Stop game WITHOUT triggering Game Over event
   } else if (screenName === 'game') {
     dom.gameScreen.classList.add('active');
     // We will start game explicitly via button click logic, 
@@ -151,6 +151,35 @@ function showGameOver(score) {
 }
 
 /* Event Listeners */
+
+// Keyboard Controls
+let currentZoneIndex = 1; // 0:Left, 1:Center, 2:Right
+const zones = ["Left", "Center", "Right"];
+
+window.addEventListener('keydown', (e) => {
+  if (!gameEngine.isGameActive) return;
+
+  switch (e.key) {
+    case "ArrowLeft":
+      if (currentZoneIndex > 0) {
+        currentZoneIndex--;
+        updateZone();
+      }
+      break;
+    case "ArrowRight":
+      if (currentZoneIndex < 2) {
+        currentZoneIndex++;
+        updateZone();
+      }
+      break;
+  }
+});
+
+function updateZone() {
+  const poseName = zones[currentZoneIndex];
+  updatePoseUI(poseName);
+  gameEngine.onPoseDetected(poseName);
+}
 
 // 1. Menu -> Game Start
 dom.mainStartBtn.addEventListener('click', () => {

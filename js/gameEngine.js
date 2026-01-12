@@ -78,13 +78,13 @@ class GameEngine {
     this.loop();
   }
 
-  stop() {
+  stop(triggerEvent = true) {
     this.isGameActive = false;
     if (this.gameLoopId) {
       cancelAnimationFrame(this.gameLoopId);
     }
     // 게임 오버 알림
-    if (this.onGameEnd) {
+    if (triggerEvent && this.onGameEnd) {
       // 렌더링 루프가 멈춘 뒤 실행되도록 잠시 대기
       setTimeout(() => {
         this.onGameEnd(this.score, this.level);
