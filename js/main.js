@@ -64,7 +64,7 @@ function initPage() {
 async function startGame(mode) {
   inputMode = mode;
   if (dom.startScreen) dom.startScreen.style.display = 'none'; // 메뉴 숨김
-  if (dom.gameArea) dom.gameArea.style.display = 'block';   // 게임 영역 표시
+  if (dom.gameArea) dom.gameArea.style.display = 'flex';   // 게임 영역 표시
 
   try {
     // 1. GameEngine 초기화 (공통)
