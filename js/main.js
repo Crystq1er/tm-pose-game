@@ -80,7 +80,7 @@ async function init() {
     });
 
     // 2. Setup Pose Engine
-    poseEngine = new PoseEngine("./my_model/");
+    poseEngine = new PoseEngine("./my-pose-model (1)/");
     await poseEngine.init({ size: 200, flip: true });
 
     if (poseEngine.webcam.canvas) {
@@ -105,9 +105,16 @@ async function init() {
       });
 
       if (maxProb > 0.8) {
-        updatePoseUI(maxClass);
+        // Label Mapping for generic names
+        // Assumption: Class 1 -> Left, Class 2 -> Center, Class 3 -> Right
+        let mappedPose = maxClass;
+        if (maxClass === "Class 1") mappedPose = "Left";
+        if (maxClass === "Class 2") mappedPose = "Center";
+        if (maxClass === "Class 3") mappedPose = "Right";
+
+        updatePoseUI(mappedPose);
         if (gameEngine.isGameActive) {
-          gameEngine.onPoseDetected(maxClass);
+          gameEngine.onPoseDetected(mappedPose);
         }
       }
     });

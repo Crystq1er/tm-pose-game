@@ -6,7 +6,7 @@
  */
 
 class PoseEngine {
-  constructor(modelURL = "./my_model/") {
+  constructor(modelURL = "./my-pose-model (1)/") {
     this.modelURL = modelURL;
     this.model = null;
     this.webcam = null;
