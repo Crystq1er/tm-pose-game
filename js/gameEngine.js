@@ -45,7 +45,9 @@ class GameEngine {
     this.stage = 1;
     this.controlMode = 'camera';
     this.stageGoal = 2000;
+    this.stageGoal = 2000;
     this.onStageClear = null;
+    this.onMissChange = null;
   }
 
   init(canvas) {
@@ -89,6 +91,7 @@ class GameEngine {
     // 초기 UI 반영
     if (this.onLivesChange) this.onLivesChange(this.lives, this.hasShield);
     if (this.onScoreChange) this.onScoreChange(this.score, this.level);
+    if (this.onMissChange) this.onMissChange(this.consecutiveMisses);
 
     this.loop();
   }
@@ -164,10 +167,13 @@ class GameEngine {
 
   handleFruitMiss() {
     this.consecutiveMisses++;
+    if (this.onMissChange) this.onMissChange(this.consecutiveMisses); // Added
+
     if (this.consecutiveMisses >= 2) {
       // 2번 연속 놓침 -> 생명 감소
       this.lives--;
       this.consecutiveMisses = 0; // 리셋
+      if (this.onMissChange) this.onMissChange(this.consecutiveMisses); // Added
 
       // UI 알림 (임시: 흔들기 효과 등은 나중에)
       if (this.onLivesChange) this.onLivesChange(this.lives, this.hasShield);
@@ -288,6 +294,7 @@ class GameEngine {
       case "grape":
         scoreDelta = (item.type === "apple" ? 100 : (item.type === "orange" ? 200 : 300));
         this.consecutiveMisses = 0; // 과일 먹으면 리셋
+        if (this.onMissChange) this.onMissChange(this.consecutiveMisses); // Added
         break;
 
       case "gift":
@@ -411,6 +418,7 @@ class GameEngine {
   setGameEndCallback(callback) { this.onGameEnd = callback; }
   setLivesChangeCallback(callback) { this.onLivesChange = callback; }
   setStageClearCallback(callback) { this.onStageClear = callback; }
+  setMissChangeCallback(callback) { this.onMissChange = callback; }
 }
 
 window.GameEngine = GameEngine;

@@ -23,6 +23,7 @@ const dom = {
   // UI Info
   score: document.getElementById('score'),
   lives: document.getElementById('lives'),
+  missCount: document.getElementById('miss-count'),
   poseLabel: document.getElementById('pose-label'),
   finalScore: document.getElementById('final-score'),
 
@@ -101,6 +102,11 @@ async function init() {
         maxUnlockedStage = Math.min(50, stage + 1);
       }
       showScreen('stage'); // Back to stage select
+    });
+
+    gameEngine.setMissChangeCallback((count) => {
+      dom.missCount.innerText = `${count} / 2`;
+      dom.missCount.style.color = count > 0 ? 'red' : '#1976d2';
     });
 
     // 2. Setup Pose Engine
