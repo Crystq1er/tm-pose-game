@@ -108,9 +108,9 @@ async function init() {
         // Label Mapping for generic names
         // Assumption: Class 1 -> Left, Class 2 -> Center, Class 3 -> Right
         let mappedPose = maxClass;
-        if (maxClass === "Class 1") mappedPose = "Left";
-        if (maxClass === "Class 2") mappedPose = "Center";
-        if (maxClass === "Class 3") mappedPose = "Right";
+        if (maxClass === "Class 1") mappedPose = "Center";
+        if (maxClass === "Class 2") mappedPose = "Right";
+        if (maxClass === "Class 3") mappedPose = "Left";
 
         updatePoseUI(mappedPose);
         if (gameEngine.isGameActive) {
