@@ -80,6 +80,10 @@ class GameEngine {
     this.baseSpeed = 200;
     this.spawnInterval = 1000;
 
+    this.consecutiveMisses = 0; // 연속 놓침 카운트
+    this.baseSpeed = 200;
+    this.spawnInterval = 1000;
+
     this.lastTime = performance.now();
 
     // 초기 UI 반영
@@ -142,6 +146,10 @@ class GameEngine {
 
       // 화면 아래로 벗어남
       if (item.y > this.canvas.height) {
+        // 과일을 놓쳤는지 체크 (폭탄, 하트 등 제외)
+        if (["apple", "orange", "grape"].includes(item.type)) {
+          this.handleFruitMiss();
+        }
         this.items.splice(i, 1);
         continue;
       }
@@ -150,6 +158,22 @@ class GameEngine {
       if (this.checkCollision(item)) {
         this.handleItemCollection(item);
         this.items.splice(i, 1);
+      }
+    }
+  }
+
+  handleFruitMiss() {
+    this.consecutiveMisses++;
+    if (this.consecutiveMisses >= 2) {
+      // 2번 연속 놓침 -> 생명 감소
+      this.lives--;
+      this.consecutiveMisses = 0; // 리셋
+
+      // UI 알림 (임시: 흔들기 효과 등은 나중에)
+      if (this.onLivesChange) this.onLivesChange(this.lives, this.hasShield);
+
+      if (this.lives <= 0) {
+        this.stop();
       }
     }
   }
@@ -236,6 +260,18 @@ class GameEngine {
       type: type,
       speed: speed
     });
+
+    // Bomb Trap Logic: 30% chance to spawn a bomb near a fruit
+    if (["apple", "orange", "grape"].includes(type) && !this.isFeverMode) {
+      if (Math.random() < 0.3) {
+        this.items.push({
+          x: x, // Same column
+          y: -50 - (Math.random() * 100 + 120), // Slightly behind (or could be front)
+          type: "bomb",
+          speed: speed // Same speed
+        });
+      }
+    }
   }
 
   checkCollision(item) {
@@ -247,9 +283,12 @@ class GameEngine {
     let scoreDelta = 0;
 
     switch (item.type) {
-      case "apple": scoreDelta = 100; break;
-      case "orange": scoreDelta = 200; break;
-      case "grape": scoreDelta = 300; break;
+      case "apple":
+      case "orange":
+      case "grape":
+        scoreDelta = (item.type === "apple" ? 100 : (item.type === "orange" ? 200 : 300));
+        this.consecutiveMisses = 0; // 과일 먹으면 리셋
+        break;
 
       case "gift":
         scoreDelta = 500;
@@ -271,6 +310,7 @@ class GameEngine {
           this.hasShield = false; // 쉴드 파괴
         } else {
           this.lives--; // 생명 감소
+          this.consecutiveMisses = 0; // 폭탄 맞아도 리셋 (선택사항, 보통은 리셋해줌)
           if (this.lives <= 0) {
             this.stop(); // 게임 오버
             return;

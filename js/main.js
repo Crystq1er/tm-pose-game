@@ -64,6 +64,14 @@ async function init() {
         dom.toggles.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         controlMode = btn.dataset.mode;
+
+        // Update Guide
+        const guideText = document.querySelector('.guide-text');
+        if (controlMode === 'camera') {
+          guideText.innerHTML = "📷 <b>카메라 모드</b><br>카메라 앞에서 몸을 왼쪽/오른쪽으로 기울여 바구니를 움직이세요!";
+        } else {
+          guideText.innerHTML = "⌨️ <b>키보드 모드</b><br><b>←(왼쪽)</b>, <b>→(오른쪽)</b> 화살표 키를 사용하여 바구니를 움직이세요! (속도 빠름)";
+        }
       });
     });
 
