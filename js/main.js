@@ -244,6 +244,8 @@ function showGameOver(score) {
 /* Event Listeners */
 
 // Keyboard Controls
+let currentZoneIndex = 1; // 0:Left, 1:Center, 2:Right
+const zones = ["Left", "Center", "Right"];
 
 
 window.addEventListener('keydown', (e) => {
