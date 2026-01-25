@@ -54,6 +54,9 @@ let controlMode = 'camera'; // 'camera' or 'keyboard'
 let currentStage = 1;
 let maxUnlockedStage = 1;
 
+// Input State
+const activeKeys = new Set();
+
 /**
  * App Initialization
  */
@@ -79,6 +82,7 @@ async function init() {
     // 1. Setup Engines
     gameEngine = new GameEngine();
     gameEngine.init(dom.gameCanvas);
+    gameEngine.setKeysObject(activeKeys);
 
     // Wire up Game Engine Callbacks
     gameEngine.setScoreChangeCallback((score, level) => {
@@ -99,7 +103,7 @@ async function init() {
     gameEngine.setStageClearCallback((stage) => {
       alert(`🎉 Stage ${stage} Cleared! 🎉`);
       if (stage >= maxUnlockedStage) {
-        maxUnlockedStage = Math.min(50, stage + 1);
+        maxUnlockedStage = Math.min(25, stage + 1);
       }
       showScreen('stage'); // Back to stage select
     });
@@ -192,7 +196,7 @@ function showScreen(screenName) {
 
 function renderStageButtons() {
   dom.stageGrid.innerHTML = "";
-  for (let i = 1; i <= 50; i++) {
+  for (let i = 1; i <= 25; i++) {
     const btn = document.createElement('button');
     btn.className = `stage-btn ${i <= maxUnlockedStage ? 'unlocked' : 'locked'}`;
     btn.innerText = `Stage ${i}`;
@@ -240,10 +244,11 @@ function showGameOver(score) {
 /* Event Listeners */
 
 // Keyboard Controls
-let currentZoneIndex = 1; // 0:Left, 1:Center, 2:Right
-const zones = ["Left", "Center", "Right"];
+
 
 window.addEventListener('keydown', (e) => {
+  activeKeys.add(e.key.toUpperCase()); // Track Key Press
+
   if (!gameEngine.isGameActive) return;
 
   switch (e.key) {

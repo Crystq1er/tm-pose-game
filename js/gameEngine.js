@@ -47,7 +47,10 @@ class GameEngine {
     this.stageGoal = 2000;
     this.stageGoal = 2000;
     this.onStageClear = null;
+    this.stageGoal = 2000;
+    this.onStageClear = null;
     this.onMissChange = null;
+    this.activeKeys = null; // Key Set from main.js
   }
 
   init(canvas) {
@@ -250,6 +253,11 @@ class GameEngine {
         type = "grape";
       } else if (rand < 0.8) {
         type = "orange";
+      } else if (rand < 0.8) {
+        type = "orange";
+      } else if (rand < 0.95 && this.controlMode === 'keyboard') {
+        // Keyboard Mode Specific: Spawning Key Items
+        type = "key";
       } else {
         type = "apple";
       }
@@ -257,15 +265,25 @@ class GameEngine {
 
     // 레벨에 따른 속도 증가 + 스테이지에 따른 기저 속도 증가
     // Stage Speed Boost: +5% per stage
+    // 레벨에 따른 속도 증가 + 스테이지에 따른 기저 속도 증가
+    // Stage Speed Boost: +5% per stage
     const stageSpeedBoost = 1 + (this.stage - 1) * 0.05;
     const speed = this.baseSpeed * stageSpeedBoost * (1 + (this.level * 0.1)) * speedMult;
 
-    this.items.push({
+    const newItem = {
       x: x,
       y: -50,
       type: type,
       speed: speed
-    });
+    };
+
+    if (type === "key") {
+      // Random Key (A-Z, or simple set)
+      const keys = ["A", "S", "D", "W", "SPACE", "ENTER"];
+      newItem.keyName = keys[Math.floor(Math.random() * keys.length)];
+    }
+
+    this.items.push(newItem);
 
     // Bomb Trap Logic: 30% chance to spawn a bomb near a fruit
     if (["apple", "orange", "grape"].includes(type) && !this.isFeverMode) {
@@ -324,6 +342,23 @@ class GameEngine {
           }
         }
         if (this.onLivesChange) this.onLivesChange(this.lives, this.hasShield);
+        if (this.onLivesChange) this.onLivesChange(this.lives, this.hasShield);
+        break;
+
+      case "key":
+        // Check if key is pressed
+        if (this.activeKeys && this.activeKeys.has(item.keyName)) {
+          // Success!
+          scoreDelta = 300;
+        } else {
+          // Fail!
+          this.lives--;
+          if (this.onLivesChange) this.onLivesChange(this.lives, this.hasShield);
+          if (this.lives <= 0) {
+            this.stop();
+            return;
+          }
+        }
         break;
     }
 
@@ -403,8 +438,25 @@ class GameEngine {
       if (item.type === "shield") icon = "🛡️";
       if (item.type === "heart") icon = "❤️";
 
-      ctx.font = "50px sans-serif";
-      ctx.fillText(icon, item.x, item.y);
+      if (item.type === "key") {
+        // Draw Key Box
+        ctx.fillStyle = "#fff";
+        ctx.strokeStyle = "#333";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        // Simple Rect
+        ctx.roundRect(item.x - 30, item.y - 30, 60, 60, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        // Draw Text
+        ctx.fillStyle = "#333";
+        ctx.font = "bold 20px sans-serif";
+        ctx.fillText(item.keyName, item.x, item.y);
+      } else {
+        ctx.font = "50px sans-serif";
+        ctx.fillText(icon, item.x, item.y);
+      }
     });
   }
 
@@ -419,6 +471,7 @@ class GameEngine {
   setLivesChangeCallback(callback) { this.onLivesChange = callback; }
   setStageClearCallback(callback) { this.onStageClear = callback; }
   setMissChangeCallback(callback) { this.onMissChange = callback; }
+  setKeysObject(keysSet) { this.activeKeys = keysSet; }
 }
 
 window.GameEngine = GameEngine;
