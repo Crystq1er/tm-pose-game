@@ -419,3 +419,55 @@ body {
     gap: 10px;
     justify-content: center;
 }
+/* 스테이지 그리드 */
+.stage-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+    margin: 20px 0;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.stage-btn {
+    padding: 15px 0;
+    font-size: 1.2rem;
+    font-family: 'Jua', sans-serif;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #888;
+}
+
+.stage-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--secondary-color);
+}
+
+.stage-btn.locked {
+    background: #eee;
+    color: #ccc;
+    cursor: not-allowed;
+    border: none;
+}
+
+.stage-btn.unlocked {
+    border-color: var(--secondary-color);
+    color: var(--text-color);
+    font-weight: bold;
+    background: white;
+}
+
+.stage-btn.active {
+    background: var(--secondary-color);
+    color: white;
+    border-color: var(--secondary-color);
+    box-shadow: 0 4px 10px rgba(78, 205, 196, 0.4);
+}
+
+#stage-screen .menu-content {
+    max-width: 700px; /* 그리드 위해 넓히기 */
+}

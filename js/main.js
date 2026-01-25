@@ -43,7 +43,15 @@ const dom = {
   toggles: document.querySelectorAll('.toggle-btn')
 };
 
+// Stage Elements
+dom.stageScreen = document.getElementById('stage-screen');
+dom.stageGrid = document.getElementById('stage-grid');
+dom.backToModeBtn = document.getElementById('back-to-mode-btn');
+
+
 let controlMode = 'camera'; // 'camera' or 'keyboard'
+let currentStage = 1;
+let maxUnlockedStage = 1;
 
 /**
  * App Initialization
@@ -77,6 +85,14 @@ async function init() {
 
     gameEngine.setGameEndCallback((score) => {
       showGameOver(score);
+    });
+
+    gameEngine.setStageClearCallback((stage) => {
+      alert(`🎉 Stage ${stage} Cleared! 🎉`);
+      if (stage >= maxUnlockedStage) {
+        maxUnlockedStage = Math.min(50, stage + 1);
+      }
+      showScreen('stage'); // Back to stage select
     });
 
     // 2. Setup Pose Engine
@@ -139,6 +155,7 @@ function showScreen(screenName) {
   // Hide all screens
   dom.menuScreen.classList.remove('active');
   dom.gameScreen.classList.remove('active');
+  dom.stageScreen.classList.remove('active');
 
   // Hide all overlays
   dom.gameOver.classList.remove('active');
@@ -153,7 +170,41 @@ function showScreen(screenName) {
     // but here we just show the screen.
     // Resize canvas just in case
     gameEngine.resizeCanvas();
+  } else if (screenName === 'stage') {
+    dom.stageScreen.classList.add('active');
+    renderStageButtons();
   }
+}
+
+function renderStageButtons() {
+  dom.stageGrid.innerHTML = "";
+  for (let i = 1; i <= 50; i++) {
+    const btn = document.createElement('button');
+    btn.className = `stage-btn ${i <= maxUnlockedStage ? 'unlocked' : 'locked'}`;
+    btn.innerText = `Stage ${i}`;
+
+    if (i <= maxUnlockedStage) {
+      btn.addEventListener('click', () => {
+        currentStage = i;
+        startGameWithStage(i);
+      });
+    }
+
+    dom.stageGrid.appendChild(btn);
+  }
+}
+
+function startGameWithStage(stage) {
+  showScreen('game');
+
+  // Hide/Show Webcam based on mode
+  if (controlMode === 'keyboard') {
+    dom.webcamContainer.style.opacity = '0.1';
+  } else {
+    dom.webcamContainer.style.opacity = '1';
+  }
+
+  gameEngine.start(stage, controlMode);
 }
 
 function updatePoseUI(poseName) {
@@ -203,20 +254,13 @@ function updateZone() {
   gameEngine.onPoseDetected(poseName);
 }
 
-// 1. Menu -> Game Start
+// 1. Menu -> Stage Select
 dom.mainStartBtn.addEventListener('click', () => {
-  showScreen('game');
+  showScreen('stage');
+});
 
-  // Hide/Show Webcam based on mode
-  if (controlMode === 'keyboard') {
-    dom.webcamContainer.style.opacity = '0.1'; // Dim it
-    // if we want to completely pause pose engine?
-    // maybe just keep it running for simplicity, but ignore its output?
-  } else {
-    dom.webcamContainer.style.opacity = '1';
-  }
-
-  gameEngine.start();
+dom.backToModeBtn.addEventListener('click', () => {
+  showScreen('menu');
 });
 
 // Update Pose Callback to respect Control Mode
@@ -234,7 +278,9 @@ dom.backToMenuBtn.addEventListener('click', () => {
 // 3. Game Over -> Restart
 dom.restartBtn.addEventListener('click', () => {
   dom.gameOver.classList.remove('active');
-  gameEngine.start(); // Restart game directly
+  dom.gameOver.classList.remove('active');
+  // Restart current stage
+  startGameWithStage(currentStage);
 });
 
 // 4. Game Over -> Go Menu

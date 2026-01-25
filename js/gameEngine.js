@@ -41,6 +41,11 @@ class GameEngine {
 
     this.ctx = null;
     this.canvas = null;
+
+    this.stage = 1;
+    this.controlMode = 'camera';
+    this.stageGoal = 2000;
+    this.onStageClear = null;
   }
 
   init(canvas) {
@@ -56,12 +61,18 @@ class GameEngine {
     this.canvas.height = this.canvas.parentElement.clientHeight;
   }
 
-  start() {
+  start(stage = 1, controlMode = 'camera') {
     this.isGameActive = true;
     this.score = 0;
     this.level = 1;
     this.lives = 3; // 생명 3개로 시작
     this.hasShield = false;
+    this.stage = stage;
+    this.controlMode = controlMode;
+
+    // Stage Goal Calculation: 2000 + (Stage-1)*500
+    // Stage 1: 2000, Stage 2: 2500 ...
+    this.stageGoal = 2000 + (this.stage - 1) * 500;
 
     this.items = [];
     this.currentPose = "Center";
@@ -174,6 +185,12 @@ class GameEngine {
     let type = "apple";
     let speedMult = 1;
 
+    // Control Mode Speed Modifier
+    // Keyboard is easier, so make it faster
+    if (this.controlMode === 'keyboard') {
+      speedMult *= 1.6;
+    }
+
     // FEVER MODE: 무조건 과일, 속도 빠름, 많이 나옴
     if (this.isFeverMode) {
       // Fever일 때는 좋은 과일 확률 UP
@@ -182,16 +199,22 @@ class GameEngine {
       else if (fRand < 0.7) type = "grape"; // 30%
       else type = "apple";
 
-      speedMult = 1.3; // 속도 1.3배
+      speedMult *= 1.3; // 속도 1.3배
     } else {
       // Normal Mode
+      // Difficulty Scaling based on Stage
+      // Base Bomb Chance: 0.1 at Stage 1
+      // Increase by 0.01 per stage. Max 0.5 (Stage 41+)
+      let bombChance = 0.1 + (this.stage - 1) * 0.01;
+      bombChance = Math.min(0.5, bombChance);
+
       if (rand < 0.01) {
         type = "gift";
       } else if (rand < 0.03) {
         type = "shield";
       } else if (rand < 0.04) {
         type = "heart"; // Heart Item (Very Rare)
-      } else if (rand < 0.35) {
+      } else if (rand < 0.04 + bombChance) {
         type = "bomb";
       } else if (rand < 0.6) {
         type = "grape";
@@ -202,8 +225,10 @@ class GameEngine {
       }
     }
 
-    // 레벨에 따른 속도 증가
-    const speed = this.baseSpeed * (1 + (this.level * 0.1)) * speedMult;
+    // 레벨에 따른 속도 증가 + 스테이지에 따른 기저 속도 증가
+    // Stage Speed Boost: +5% per stage
+    const stageSpeedBoost = 1 + (this.stage - 1) * 0.05;
+    const speed = this.baseSpeed * stageSpeedBoost * (1 + (this.level * 0.1)) * speedMult;
 
     this.items.push({
       x: x,
@@ -268,6 +293,14 @@ class GameEngine {
 
     if (this.onScoreChange) {
       this.onScoreChange(this.score, this.level);
+    }
+
+    // Check Stage Clear
+    if (this.score >= this.stageGoal) {
+      this.stop(false); // Stop without Game Over event
+      if (this.onStageClear) {
+        this.onStageClear(this.stage);
+      }
     }
   }
 
@@ -334,7 +367,10 @@ class GameEngine {
 
   setScoreChangeCallback(callback) { this.onScoreChange = callback; }
   setGameEndCallback(callback) { this.onGameEnd = callback; }
+  setScoreChangeCallback(callback) { this.onScoreChange = callback; }
+  setGameEndCallback(callback) { this.onGameEnd = callback; }
   setLivesChangeCallback(callback) { this.onLivesChange = callback; }
+  setStageClearCallback(callback) { this.onStageClear = callback; }
 }
 
 window.GameEngine = GameEngine;
