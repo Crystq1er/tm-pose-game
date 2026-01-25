@@ -37,7 +37,34 @@
           </div>
         </div>
 
-        <button id="main-start-btn" class="btn large pulse">GAME START</button>
+        <div class="menu-btns">
+          <button id="main-start-btn" class="btn large pulse">GAME START</button>
+          <button id="guide-btn" class="btn secondary">📖 How to Play</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1-2. 가이드 화면 -->
+    <section id="guide-screen" class="screen">
+      <div class="menu-content guide-content">
+        <h2>📖 게임 가이드</h2>
+        <div class="guide-scroll">
+          <h3>🕹️ 조작 방법</h3>
+          <p><b>📷 카메라 모드:</b> 몸을 기울여 바구니 이동</p>
+          <p><b>⌨️ 키보드 모드:</b> 방향키(⬅️➡️)로 이동</p>
+          <hr>
+          <h3>🎹 키보드 아이템 (QTE)</h3>
+          <p><b>⬜ 하얀 상자</b>에 적힌 키를 꾹 누른 채로 드세요!</p>
+          <p>❌ 누르지 않고 먹으면 <b>생명 감소!</b></p>
+          <p>✅ 누르고 먹으면 <b>+300점!</b></p>
+          <hr>
+          <h3>🍎 아이템 설명</h3>
+          <p>🍎🍊🍇: 점수 획득 (연속 2개 놓치면 생명 감소!)</p>
+          <p>💣: 생명 감소 (피하세요!)</p>
+          <p>🛡️: 폭탄 1회 방어</p>
+          <p>🎁: 피버 모드! (폭탄 사라짐, 점수 대박)</p>
+        </div>
+        <button id="close-guide-btn" class="btn small">닫기</button>
       </div>
     </section>
 

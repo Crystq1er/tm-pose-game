@@ -487,3 +487,39 @@ body {
     color: #555;
     line-height: 1.5;
 }
+
+/* Menu Buttons */
+.menu-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Guide Screen */
+.guide-content {
+    max-width: 600px;
+    text-align: left;
+}
+
+.guide-scroll {
+    max-height: 400px;
+    overflow-y: auto;
+    margin: 20px 0;
+    padding-right: 10px;
+    border: 1px solid #eee;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.guide-scroll h3 {
+    color: var(--primary-color);
+    border-bottom: 2px solid #eee;
+    padding-bottom: 5px;
+}
+
+.guide-scroll hr {
+    border: none;
+    border-top: 1px dashed #ccc;
+    margin: 20px 0;
+}

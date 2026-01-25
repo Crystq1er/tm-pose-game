@@ -154,7 +154,7 @@ class GameEngine {
       if (item.y > this.canvas.height) {
         // 과일을 놓쳤는지 체크 (폭탄, 하트 등 제외)
         if (["apple", "orange", "grape"].includes(item.type)) {
-          this.handleFruitMiss();
+          this.handleFruitMiss(item);
         }
         this.items.splice(i, 1);
         continue;
@@ -168,7 +168,10 @@ class GameEngine {
     }
   }
 
-  handleFruitMiss() {
+  handleFruitMiss(item) {
+    // Fever Mode 아이템은 미스 카운트에 포함 안 됨
+    if (item && item.isFeverItem) return;
+
     this.consecutiveMisses++;
     if (this.onMissChange) this.onMissChange(this.consecutiveMisses); // Added
 
@@ -274,7 +277,8 @@ class GameEngine {
       x: x,
       y: -50,
       type: type,
-      speed: speed
+      speed: speed,
+      isFeverItem: this.isFeverMode // Fever Flag
     };
 
     if (type === "key") {
@@ -390,6 +394,7 @@ class GameEngine {
     this.isFeverMode = true;
     this.feverTimer = 5.0; // 5 seconds
     this.spawnInterval = 200; // Very fast spawn
+    this.items = []; // Clear existing items (bombs, etc.)
   }
 
   render() {

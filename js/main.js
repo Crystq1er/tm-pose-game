@@ -11,6 +11,7 @@ const dom = {
   // Screens
   menuScreen: document.getElementById('menu-screen'),
   gameScreen: document.getElementById('game-screen'),
+  guideScreen: document.getElementById('guide-screen'),
 
   // Overlays
   loading: document.getElementById('loading'),
@@ -29,6 +30,8 @@ const dom = {
 
   // Buttons
   mainStartBtn: document.getElementById('main-start-btn'),
+  guideBtn: document.getElementById('guide-btn'),
+  closeGuideBtn: document.getElementById('close-guide-btn'),
   backToMenuBtn: document.getElementById('back-to-menu-btn'),
   restartBtn: document.getElementById('restart-btn'),
   goMenuBtn: document.getElementById('go-menu-btn'),
@@ -174,6 +177,7 @@ function showScreen(screenName) {
   dom.menuScreen.classList.remove('active');
   dom.gameScreen.classList.remove('active');
   dom.stageScreen.classList.remove('active');
+  dom.guideScreen.classList.remove('active');
 
   // Hide all overlays
   dom.gameOver.classList.remove('active');
@@ -182,6 +186,8 @@ function showScreen(screenName) {
   if (screenName === 'menu') {
     dom.menuScreen.classList.add('active');
     gameEngine.stop(false); // Stop game WITHOUT triggering Game Over event
+  } else if (screenName === 'guide') {
+    dom.guideScreen.classList.add('active');
   } else if (screenName === 'game') {
     dom.gameScreen.classList.add('active');
     // We will start game explicitly via button click logic, 
@@ -281,6 +287,14 @@ dom.mainStartBtn.addEventListener('click', () => {
 });
 
 dom.backToModeBtn.addEventListener('click', () => {
+  showScreen('menu');
+});
+
+// Guide Buttons
+dom.guideBtn.addEventListener('click', () => {
+  showScreen('guide');
+});
+dom.closeGuideBtn.addEventListener('click', () => {
   showScreen('menu');
 });
 
